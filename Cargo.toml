@@ -1,0 +1,9 @@
+[package]
+name = "chatpack-updater"
+version = "0.1.0"
+authors = ["Blake Oliver <oliver22213@me.com>"]
+
+[dependencies]
+checksums = "0.5.5"
+serde_json = "1.0"
+walkdir = "2"
