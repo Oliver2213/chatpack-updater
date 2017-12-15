@@ -16,9 +16,11 @@ use checksums::Algorithm;
 extern crate chrono;
 use chrono::{Local, DateTime, Datelike};
 
+extern crate chatpack_updater;
+use chatpack_updater::version::Version;
 
 // set constants
-const TARGET_DIR: &str = "chatpack";
+const TARGET_DIR: &str = "chatpack"; // The directory (under the current working one) in which files will be hashed (recursing into subdirectories as well)
 const ALGO: Algorithm = checksums::Algorithm::BLAKE2;
 const JOBS: usize = 2;
 
@@ -32,8 +34,9 @@ fn main () {
     }
     let now: DateTime<Local> = Local::now();
     println!("Building manifest for {}...", cp_path.display());
-    let ver = format!("{}.{}.{}.{}", now.year(), now.month(), now.day(), 1);
-    println!("Version string would be: {}", ver);
+    let ver_str = format!("{}.{}.{}.{}", now.year(), now.month(), now.day(), 1);
+    let ver: Version = Version::from_string(&ver_str);
+    println!("Version string would be: {:?}", ver);
     let ignores = BTreeSet::new();
     let max_recursion: Option<usize> = Some(10);
     let hashes: BTreeMap<String, String> = create_hashes(&cp_path,
@@ -45,5 +48,4 @@ fn main () {
         stdout(),
         &mut stderr()
     );
-    //println!("Hello, world!");
 }
