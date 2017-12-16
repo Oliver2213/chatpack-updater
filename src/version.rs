@@ -68,7 +68,8 @@ impl Version {
     if date_updated == false {
       self.patch = self.patch + 1;
     }
-  // return self
-  // self
+  }
+  pub fn to_string(&self) -> String {
+    return format!("{}.{}.{}.{}", self.year, self.month, self.day, self.patch);
   }
 }
