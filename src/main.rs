@@ -19,7 +19,7 @@ const TARGET_DIR: &str = "chatpack";
 const ALGO: Algorithm = checksums::Algorithm::BLAKE2;
 const JOBS: usize = 2;
 const VERSION_FILENAME :&str = "chatpack.ver"; // the name of the file (under target_dir) which holds chatpack's current version (and which needs to be updated by this program)
-const MANIFEST_FILENAME: &str = "chatpack.update-manifest"; // The filename which the hash manifest gets written to (in the current working directory for this program, not under TARGET_DIR)
+const MANIFEST_FILENAME: &str = "chatpack.update-manifest"; // The filename which contains the hash manifest (which this program will download and compare against)
 
 
 fn main () {
@@ -42,8 +42,10 @@ fn main () {
         },
         None => panic!("Can't determine current directory name."),
     }
+    // this will be populated later, when I add the ability for users to ignore files (so the updater won't update them), but for now it's just an empty set
     let ignores = BTreeSet::new();
     let max_recursion: Option<usize> = Some(10);
+    // Hash files in `TARGET_DIR` to determine what needs to be updated
     let hashes: BTreeMap<String, String> = create_hashes(&cp_path,
         ignores,
         ALGO,
