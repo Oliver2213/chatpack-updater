@@ -14,11 +14,6 @@ use std::collections::{BTreeSet, BTreeMap};
 extern crate checksums;
 use checksums::ops::create_hashes;
 use checksums::Algorithm;
-/*
-// Pull in chrono
-extern crate chrono;
-use chrono::{Local, DateTime, Datelike};
-*/
 
 extern crate chatpack_updater;
 use chatpack_updater::version::Version;

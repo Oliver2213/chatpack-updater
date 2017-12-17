@@ -1,7 +1,10 @@
 // Chatpack updater in rust, by Blake Oliver <oliver22213@me.com>
 
+// This program Hashes files under `TARGET_DIR`, then compares that to a downloaded manifest it retrieves from the repository, then replaces files who's hashes differ
+
 use std::io::{stdout, stderr};
-use std::path::{Path, PathBuf};
+use std::fs::{File, OpenOptions};
+use std::path::PathBuf;
 use std::env;
 use std::collections::{BTreeSet, BTreeMap};
 // pull in checksums
@@ -9,17 +12,36 @@ extern crate checksums;
 use checksums::ops::create_hashes;
 use checksums::Algorithm;
 
+extern crate chatpack_updater; // pull in our "library" crate so every binary can use things it reexports
 
 // set constants
 const TARGET_DIR: &str = "chatpack";
 const ALGO: Algorithm = checksums::Algorithm::BLAKE2;
 const JOBS: usize = 2;
+const VERSION_FILENAME :&str = "chatpack.ver"; // the name of the file (under target_dir) which holds chatpack's current version (and which needs to be updated by this program)
+const MANIFEST_FILENAME: &str = "chatpack.update-manifest"; // The filename which the hash manifest gets written to (in the current working directory for this program, not under TARGET_DIR)
 
 
 fn main () {
-    let mut cp_path: PathBuf = env::current_dir().unwrap();
-    cp_path.push(TARGET_DIR);
-    println!("Using directory '{}'.", cp_path.display());
+    let cp_path: PathBuf = env::current_dir().unwrap();
+    // make sure this program is located inside `TARGET_DIR`
+    // I could turn off the must_use thing and then I could just do get_filename without a match (as that is unlikely to ever fail)
+    // but I can't remember what it's called exactly, so...
+    match cp_path.file_name() {
+        Some(dirname) => {
+            match dirname.to_str() {
+                Some(s) => {
+                    if s != TARGET_DIR{
+                        println!("This updater must be run from inside the '{}' directory.", TARGET_DIR);
+                        return;
+                    }
+                },
+                // this is a pretty obscure error but...
+                None => panic!("Can't decode current directory name from an OS String."),
+            }
+        },
+        None => panic!("Can't determine current directory name."),
+    }
     let ignores = BTreeSet::new();
     let max_recursion: Option<usize> = Some(10);
     let hashes: BTreeMap<String, String> = create_hashes(&cp_path,
@@ -31,5 +53,4 @@ fn main () {
         stdout(),
         &mut stderr()
     );
-    //println!("Hello, world!");
 }
