@@ -15,15 +15,15 @@ impl Version {
   pub fn from_string(version_string: &str) -> Version {
     // this method creates and returns a new version struct;
     // it accepts a string, an example of which is "2017.12.10.1"
-    let elements: Vec<&str> = version_string.split('.').collect();
-    let year: i16 = elements[0]
+    let elements: Vec<&str> = version_string.trim().split('.').collect();
+    let year: i16 = elements[0].trim()
       .parse::<i16>()
       .expect("Error converting the year field of version to an integer");
-    let month: i8 = elements[1].parse::<i8>()
+    let month: i8 = elements[1].trim().parse::<i8>()
       .expect("Error converting the month field of version to an integer");
-    let day: i8 = elements[2].parse::<i8>()
+    let day: i8 = elements[2].trim().parse::<i8>()
       .expect("Error converting the day field of version to an integer");
-    let patch:i8 = elements[3].parse()
+    let patch:i8 = elements[3].trim().parse()
       .expect("Error converting the patch field of version into an integer");
     let v: Version = Version {year, month, day, patch};
     return v;
@@ -67,6 +67,8 @@ impl Version {
     // if the date fields weren't updated, increment the patch number (to indicate that this version is n that day, where n = patch)
     if date_updated == false {
       self.patch = self.patch + 1;
+    } else {
+      self.patch = 1; // set the patch number to 1 for the new date version
     }
   }
   pub fn to_string(&self) -> String {
