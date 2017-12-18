@@ -10,6 +10,7 @@ use std::error::Error;
 use std::io::prelude::*;
 use std::env;
 use std::collections::{BTreeSet, BTreeMap};
+use std::process::Command;
 // pull in checksums
 extern crate checksums;
 use checksums::ops::create_hashes;
@@ -106,6 +107,9 @@ fn main () {
                     Ok(_) => (),
                     Err(why) => panic!("Can't read version file {}: {}", cp_version_path.display(), why.description()),
                 }
+                println!("Read bytes from version file. Contents: '{}'", str_ver);
+                str_ver = str_ver.trim_left().parse().expect("Failed to interpret version string as an str after trim.");
+                println!("After a trim, we have: '{}'", str_ver);
                 version = Version::from_string(&str_ver);
                 version.update();
                 // delete the current contents of the file so it can be written to later with just the newly-created version as a string
@@ -123,5 +127,33 @@ fn main () {
     match version_file.write_all(version.to_string().as_bytes()) {
         Ok(_) => (),
         Err(why) => println!("Can't write new version to {}: {}", cp_manifest_path.display(), why.description()),
+    }
+
+    // We've now created then written a manifest out to disk, then updated the version
+    // Now check to see if this program is being used as a git hook, and if so, add the manifest and version files to git's index (so they automatically get included in commits)
+    match env::current_exe() {
+        Ok(p) => {
+            // successfully got path
+            let name = match p.file_name() {
+                Some(n) => n.to_str().unwrap(), // if we got the last component, return it (as an str)
+                None => panic!("Can't parse executable name of this program for the git hook check. This means I can't automatically add the generated hash manifest and version file to the git index if this program is being used as a pre-commit git hook; if this is the case, you'll need to manually git add them."),
+            };
+            if name == "pre-commit" {
+                // this program is being used as a git hook, which means we should add our previously-generated hash manifest and version files to it's index, so they get automatically committed
+                let git_add_status = Command::new("git")
+                    .args(&["add", cp_manifest_path.to_str().unwrap(), cp_version_path.to_str().unwrap()])
+                    .status()
+                    .expect("Can't run `git add` to add the hash manifest and version files to git's index");
+                if git_add_status.success() == false {
+                    // the code returned by the git add command was non-zero
+                    println!("Can't execute `git add`: this program is being used as a git pre-commit hook, but it's unable to automatically add the manifest and version files to git's index. You will have to do this manually before you commit with the following command: git add {} {}", cp_manifest_path.display(), cp_version_path.display());
+                    return;
+                } else {
+                    // files added
+                    println!("Hash manifest and version files have been added to git's index; ready to commit.");
+                }
+            }
+        },
+        Err(why) => panic!("Can't get path to this program:{}", why.description()),
     }
 }
