@@ -123,7 +123,7 @@ fn main () {
         };
     } // end the exists if block
     match version_file.write_all(version.to_string().as_bytes()) {
-        Ok(_) => (),
+        Ok(_) => version_file.flush().expect("Can't write version out to file."),
         Err(why) => println!("Can't write new version to {}: {}", cp_manifest_path.display(), why.description()),
     }
 
