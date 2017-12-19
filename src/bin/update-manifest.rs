@@ -3,7 +3,7 @@
 // This program hashes files under TARGET_DIR and outputs the result to a file;
 // That file is for use by the actual updater
 
-use std::io::{stdout, stderr};
+use std::io::{stdout, stderr, SeekFrom};
 use std::path::PathBuf;
 use std::fs::{File, OpenOptions};
 use std::error::Error;
@@ -107,13 +107,11 @@ fn main () {
                     Ok(_) => (),
                     Err(why) => panic!("Can't read version file {}: {}", cp_version_path.display(), why.description()),
                 }
-                println!("Read bytes from version file. Contents: '{}'", str_ver);
-                str_ver = str_ver.trim().parse().expect("Failed to interpret version string as an str after trim.");
-                println!("After a trim, we have: '{}'", str_ver);
+                str_ver = str_ver.trim().into();
                 version = Version::from_string(&str_ver);
                 version.update();
                 // delete the current contents of the file so it can be written to later with just the newly-created version as a string
-                // put the following in a match statement,
+                file.seek(SeekFrom::Start(0)).expect("Can't seek to offset 0 in the version file to overwrite it.");
                 match file.set_len(0){
                     Ok(_) => (),
                     Err(why) => panic!("Can't overwrite {}: {}", cp_version_path.display(), why.description()),
