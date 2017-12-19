@@ -108,7 +108,7 @@ fn main () {
                     Err(why) => panic!("Can't read version file {}: {}", cp_version_path.display(), why.description()),
                 }
                 println!("Read bytes from version file. Contents: '{}'", str_ver);
-                str_ver = str_ver.trim_left().parse().expect("Failed to interpret version string as an str after trim.");
+                str_ver = str_ver.trim().parse().expect("Failed to interpret version string as an str after trim.");
                 println!("After a trim, we have: '{}'", str_ver);
                 version = Version::from_string(&str_ver);
                 version.update();
