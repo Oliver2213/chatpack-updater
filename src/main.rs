@@ -10,7 +10,7 @@ use std::collections::{BTreeSet, BTreeMap};
 use std::error::Error;
 // pull in checksums
 extern crate checksums;
-use checksums::ops::create_hashes;
+use checksums::ops::{create_hashes, compare_hashes, CompareResult, CompareFileResult};
 use checksums::Algorithm;
 
 extern crate chatpack_updater; // pull in our "library" crate so every binary can use things it reexports
@@ -64,7 +64,6 @@ fn main () {
         let j: BTreeMap<String, String> = resp.json().expect("Error parsing downloaded manifest file.");
         master_manifest = j;
     }
-    //println!(master_manifest.display());
     // this will be populated later, when I add the ability for users to ignore files (so the updater won't update them), but for now it's just an empty set
     let ignores = BTreeSet::new();
     let max_recursion: Option<usize> = Some(10);
@@ -78,4 +77,36 @@ fn main () {
         stdout(),
         &mut stderr()
     );
+    // now compare them against the downloaded manifest
+    let res = compare_hashes("", hashes, master_manifest);
+    let mut new_files: Vec<String>;
+    let mut modified_files: Vec<String>;
+    let mut ignored_files: Vec<String>;
+    let mut removed_files: Vec<String>;
+    match res {
+        Ok((mut cr, mut fcr)) => {
+            // initialize the variables that need to survive out of this scope
+            // without the next 4 lines, the compiler yells about using uninitialized variables so
+            new_files = [].to_vec();
+            modified_files = [].to_vec();
+            ignored_files = [].to_vec();
+            removed_files = [].to_vec();
+            for r in &cr {
+                match *r {
+                    CompareResult::FileAdded(ref file) => new_files.push(file.to_owned()),
+                    CompareResult::FileRemoved(ref file) => removed_files.push(file.to_owned()),
+                    CompareResult::FileIgnored(ref file) => ignored_files.push(file.to_owned()),
+                } // end the match
+            } // end the for loop
+            // now check for modified files
+            for r in &fcr {
+                match *r {
+                    CompareFileResult::FileMatches(_) => (), // don't do anything if files are the same
+                    CompareFileResult::FileDiffers {ref file, ref was_hash, ref new_hash} => modified_files.push(file.to_owned()),
+                } // end individual file match
+            } // end the for loop
+        } // end ok
+        Err(_) => panic!("Error comparing hashes: hash lengths of the downloaded manifest and locally-generated one differ."),
+    }
+    println!("Comparison results: {} new files, {} modified files, {} removed files.", new_files.len(), modified_files.len(), removed_files.len());
 }
