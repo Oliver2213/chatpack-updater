@@ -136,7 +136,8 @@ fn main () {
                 Some(n) => n.to_str().unwrap(), // if we got the last component, return it (as an str)
                 None => panic!("Can't parse executable name of this program for the git hook check. This means I can't automatically add the generated hash manifest and version file to the git index if this program is being used as a pre-commit git hook; if this is the case, you'll need to manually git add them."),
             };
-            if name == "pre-commit" {
+            let args = env::args().collect::<Vec<String>>();
+            if name == "pre-commit" || args.contains(&"pre-commit".to_string()) {
                 // this program is being used as a git hook, which means we should add our previously-generated hash manifest and version files to it's index, so they get automatically committed
                 let git_add_status = Command::new("git")
                     .args(&["add", cp_manifest_path.to_str().unwrap(), cp_version_path.to_str().unwrap()])
