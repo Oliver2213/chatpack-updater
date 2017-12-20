@@ -3,8 +3,8 @@
 // This program Hashes files under `TARGET_DIR`, then compares that to a downloaded manifest it retrieves from the repository, then replaces files who's hashes differ
 
 use std::io::{stdout, stderr, Read};
-use std::fs::{File, OpenOptions};
-use std::path::PathBuf;
+use std::fs::{File, OpenOptions, read_dir};
+use std::path::{Path, PathBuf};
 use std::env;
 use std::collections::{BTreeSet, BTreeMap};
 use std::error::Error;
@@ -28,23 +28,34 @@ const MASTER_MANIFEST_URL: &str = "https://raw.githubusercontent.com/ChatMUD/cha
 
 fn main () {
     let cp_path: PathBuf = env::current_dir().unwrap();
-    // make sure this program is located inside `TARGET_DIR`
-    // I could turn off the must_use thing and then I could just do get_filename without a match (as that is unlikely to ever fail)
-    // but I can't remember what it's called exactly, so...
-    match cp_path.file_name() {
-        Some(dirname) => {
-            match dirname.to_str() {
-                Some(s) => {
-                    if s != TARGET_DIR{
-                        println!("This updater must be run from inside the '{}' directory.", TARGET_DIR);
-                        return;
-                    }
-                },
-                // this is a pretty obscure error but...
-                None => panic!("Can't decode current directory name from an OS String."),
+    let mush_directory_markers: Vec<&str> = ["MUSHclient.exe", "worlds", "mushclient_prefs.sqlite"].to_vec(); // Files and directories that indicate a mush client directory
+    // make sure this program is located inside a mush directory
+    // do this by getting a list of `Path` instances for the current directory and looping through the marker paths to see if it contains one of them
+    // do this in a different scope so we don't keep around variables that aren't needed afterwards
+    {
+        let entries: Vec<PathBuf> = read_dir(&cp_path).expect("Can't read files in current directory.")
+          .map(| e | {
+            match e {
+                Ok(e) => e.path(),
+                Err(why) => panic!("Can't read entry in current directory: {}", why.description()),
+            } // end the match
+          }) // end the closure
+          .collect();
+        //println!("Entries in directory: {:?}", entries);
+        let mut marker_found= false;
+        let dir: PathBuf = env::current_dir().unwrap();
+        for e in &mush_directory_markers {
+            let mut e_path: PathBuf = dir.clone();
+            e_path.push(&e);
+            if entries.contains(&e_path) {
+                println!("Marker found: {}", e_path.display());
+                marker_found = true
             }
-        },
-        None => panic!("Can't determine current directory name."),
+        }
+        if marker_found == false {
+            println!("You must run the {} updater from your mush folder.", TARGET_DIR);
+            return;
+        }
     }
     // get a reqwest client instance (for http requests)
     let r_client = reqwest::Client::new();
@@ -84,7 +95,7 @@ fn main () {
     let mut ignored_files: Vec<String>;
     let mut removed_files: Vec<String>;
     match res {
-        Ok((mut cr, mut fcr)) => {
+        Ok((cr, fcr)) => {
             // initialize the variables that need to survive out of this scope
             // without the next 4 lines, the compiler yells about using uninitialized variables so
             new_files = [].to_vec();
