@@ -53,20 +53,20 @@ fn main () {
         println!("{}'s version file not found; one will be created.", TARGET_DIR);
     }
     let mut ignores: BTreeSet<String> = BTreeSet::new();
-    // check to see if the default ignores file exists; if so, parse it and add the relative paths of ignored files and directories to `ignores`
     let mut standard_ignores_path = cp_path.clone();
     standard_ignores_path.push(STANDARD_UPDATER_IGNORE_FILENAME);
-    if standard_ignores_path.exists() {
-        let s_ignores = gitignore::File::new(&standard_ignores_path).unwrap();
-        // walk our current directory recursively and add relative paths of ignored files and dirs
-        ignores.append(&mut utils::ignored_files(&cp_path, &s_ignores));
-    }
-    // Now check for a custom ignore file and apply that if it exists
     let mut custom_ignores_path = cp_path.clone();
     custom_ignores_path.push(CUSTOM_UPDATER_IGNORE_FILENAME);
+    let mut ignore_files: Vec<gitignore::File> = vec!();
+    if standard_ignores_path.exists() {
+        ignore_files.push(gitignore::File::new(&standard_ignores_path).unwrap());
+    }
     if custom_ignores_path.exists() {
-        let c_ignores = gitignore::File::new(&custom_ignores_path).unwrap();
-        ignores.append(&mut utils::ignored_files(&cp_path, &c_ignores));
+        ignore_files.push(gitignore::File::new(&custom_ignores_path).unwrap())
+    }
+    if ignore_files.is_empty() == false {
+        // walk our current directory recursively and add relative paths of ignored files and dirs
+        ignores.append(&mut utils::ignored_files(&cp_path, ignore_files));
     }
     let max_recursion: Option<usize> = Some(10);
     let hashes: BTreeMap<String, String> = create_hashes(&cp_path,
