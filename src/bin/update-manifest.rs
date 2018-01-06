@@ -61,6 +61,13 @@ fn main () {
         // walk our current directory recursively and add relative paths of ignored files and dirs
         ignores.append(&mut utils::ignored_files(&cp_path, &s_ignores));
     }
+    // Now check for a custom ignore file and apply that if it exists
+    let mut custom_ignores_path = cp_path.clone();
+    custom_ignores_path.push(CUSTOM_UPDATER_IGNORE_FILENAME);
+    if custom_ignores_path.exists() {
+        let c_ignores = gitignore::File::new(&custom_ignores_path).unwrap();
+        ignores.append(&mut utils::ignored_files(&cp_path, &c_ignores));
+    }
     let max_recursion: Option<usize> = Some(10);
     let hashes: BTreeMap<String, String> = create_hashes(&cp_path,
         ignores,
@@ -145,12 +152,16 @@ fn main () {
             let args = env::args().collect::<Vec<String>>();
             if name == "pre-commit" || args.contains(&"pre-commit".to_string()) {
                 // this program is being used as a git hook, which means we should add our previously-generated hash manifest and version files to it's index, so they get automatically committed
-                let git_add_status = Command::new("git")
-                    .args(&["add", cp_manifest_path.to_str().unwrap(), cp_version_path.to_str().unwrap()])
+                let git_add_version_status = Command::new("git")
+                    .args(&["add", cp_version_path.to_str().unwrap()])
                     .status()
-                    .expect("Can't run `git add` to add the hash manifest and version files to git's index");
-                if git_add_status.success() == false {
-                    // the code returned by the git add command was non-zero
+                    .expect("Can't run `git add` to add the version file to git's index");
+                let git_add_manifest_status = Command::new("git")
+                    .args(&["add", cp_manifest_path.to_str().unwrap()])
+                    .status()
+                    .expect("Can't run `git add` to add the hash manifest to git's index");
+                if git_add_version_status.success() == false || git_add_manifest_status.success() == false {
+                    // the code returned by either of the git add commands was non-zero
                     println!("Can't execute `git add`: this program is being used as a git pre-commit hook, but it's unable to automatically add the manifest and version files to git's index. You will have to do this manually before you commit with the following command: git add {} {}", cp_manifest_path.display(), cp_version_path.display());
                     return;
                 } else {
