@@ -17,8 +17,11 @@ use checksums::ops::create_hashes;
 
 extern crate chatpack_updater;
 use chatpack_updater::version::Version;
+use chatpack_updater::utils;
 
 extern crate serde_json;
+
+extern crate gitignore;
 
 // get constants
 use chatpack_updater::constants::*;
@@ -49,7 +52,15 @@ fn main () {
     if cp_version_path.exists() == false {
         println!("{}'s version file not found; one will be created.", TARGET_DIR);
     }
-    let ignores = BTreeSet::new();
+    let mut ignores: BTreeSet<String> = BTreeSet::new();
+    // check to see if the default ignores file exists; if so, parse it and add the relative paths of ignored files and directories to `ignores`
+    let mut standard_ignores_path = cp_path.clone();
+    standard_ignores_path.push(STANDARD_UPDATER_IGNORE_FILENAME);
+    if standard_ignores_path.exists() {
+        let s_ignores = gitignore::File::new(&standard_ignores_path).unwrap();
+        // walk our current directory recursively and add relative paths of ignored files and dirs
+        ignores.append(&mut utils::ignored_files(&cp_path, &s_ignores));
+    }
     let max_recursion: Option<usize> = Some(10);
     let hashes: BTreeMap<String, String> = create_hashes(&cp_path,
         ignores,
