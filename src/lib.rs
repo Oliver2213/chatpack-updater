@@ -5,5 +5,9 @@
 
 pub mod version;
 pub mod constants;
+pub mod utils;
+
 extern crate chrono;
 extern crate checksums;
+extern crate gitignore;
+extern crate walkdir;
