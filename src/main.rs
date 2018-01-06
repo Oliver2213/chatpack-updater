@@ -11,20 +11,13 @@ use std::error::Error;
 // pull in checksums
 extern crate checksums;
 use checksums::ops::{create_hashes, compare_hashes, CompareResult, CompareFileResult};
-use checksums::Algorithm;
 
-extern crate chatpack_updater; // pull in our "library" crate so every binary can use things it reexports
+extern crate chatpack_updater; // pull in our library crate so every binary can use things it reexports
 extern crate reqwest;
 
 
-// set constants
-const TARGET_DIR: &str = "chatpack";
-const ALGO: Algorithm = checksums::Algorithm::BLAKE2;
-const JOBS: usize = 2;
-const VERSION_FILENAME :&str = "chatpack.ver"; // the name of the file (under target_dir) which holds chatpack's current version (and which needs to be updated by this program)
-const MANIFEST_FILENAME: &str = "chatpack.update-manifest"; // The filename which contains the hash manifest (which this program will download and compare against)
-const MASTER_MANIFEST_URL: &str = "https://raw.githubusercontent.com/ChatMUD/chatpack/master/chatpack.update-manifest";
-
+// get constants
+use chatpack_updater::constants::*;
 
 fn main () {
     let cp_path: PathBuf = env::current_dir().unwrap();

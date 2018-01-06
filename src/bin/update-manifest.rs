@@ -14,19 +14,14 @@ use std::process::Command;
 // pull in checksums
 extern crate checksums;
 use checksums::ops::create_hashes;
-use checksums::Algorithm;
 
 extern crate chatpack_updater;
 use chatpack_updater::version::Version;
 
 extern crate serde_json;
 
-// set constants
-const TARGET_DIR: &str = "chatpack"; // The directory (under the current working one) in which files will be hashed (recursing into subdirectories as well); this is also used as the name in messages that get printed
-const ALGO: Algorithm = checksums::Algorithm::BLAKE2; // what hashing algorithm should be used
-const JOBS: usize = 2;
-const VERSION_FILENAME :&str = "chatpack.ver"; // the name of the file (under target_dir) which holds chatpack's current version (and which needs to be updated by this program)
-const MANIFEST_FILENAME: &str = "chatpack.update-manifest"; // The filename which the hash manifest gets written to (in the current working directory for this program, not under TARGET_DIR)
+// get constants
+use chatpack_updater::constants::*;
 
 
 fn main () {
