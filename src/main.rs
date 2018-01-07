@@ -13,6 +13,8 @@ extern crate checksums;
 use checksums::ops::{create_hashes, compare_hashes, CompareResult, CompareFileResult};
 
 extern crate chatpack_updater; // pull in our library crate so every binary can use things it reexports
+use chatpack_updater::utils;
+
 extern crate reqwest;
 
 
@@ -68,8 +70,24 @@ fn main () {
         let j: BTreeMap<String, String> = resp.json().expect("Error parsing downloaded manifest file.");
         master_manifest = j;
     }
-    // this will be populated later, when I add the ability for users to ignore files (so the updater won't update them), but for now it's just an empty set
-    let ignores = BTreeSet::new();
+    
+    // find all ignored files and directories, so they can be skipped when hashing to save time
+    let mut ignores: BTreeSet<String> = BTreeSet::new();
+    let mut standard_ignores_path = cp_path.clone();
+    standard_ignores_path.push(STANDARD_UPDATER_IGNORE_FILENAME);
+    let mut custom_ignores_path = cp_path.clone();
+    custom_ignores_path.push(CUSTOM_UPDATER_IGNORE_FILENAME);
+    let mut ignore_files: Vec<gitignore::File> = vec!(); // a vec with gitignore file instances; each will be processed and combined
+    if standard_ignores_path.exists() {
+        ignore_files.push(gitignore::File::new(&standard_ignores_path).unwrap());
+    }
+    if custom_ignores_path.exists() {
+        ignore_files.push(gitignore::File::new(&custom_ignores_path).unwrap())
+    }
+    if ignore_files.is_empty() == false {
+        // walk our current directory recursively and add relative paths of ignored files and dirs
+        ignores.append(&mut utils::ignored_files(&cp_path, ignore_files));
+    }
     let max_recursion: Option<usize> = Some(10);
     // Hash files in `TARGET_DIR` to determine what needs to be updated
     let hashes: BTreeMap<String, String> = create_hashes(&cp_path,
