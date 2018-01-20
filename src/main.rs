@@ -17,6 +17,7 @@ use chatpack_updater::utils;
 
 extern crate reqwest;
 
+extern crate gitignore;
 
 // get constants
 use chatpack_updater::constants::*;
@@ -53,6 +54,7 @@ fn main () {
     }
     // get a reqwest client instance (for http requests)
     let r_client = reqwest::Client::new();
+    println!("Retrieving a snapshot of what files in the latest version look like...");
     // now, before doing any work hashing files, try to download the hash manifest from the repository that we'll need to compare against
     // do this in a different scope so we don't have variables sticking around that won't be used later
     // keep the `master_manifest` variable, though
@@ -69,6 +71,7 @@ fn main () {
         let j: BTreeMap<String, String> = resp.json().expect("Error parsing downloaded manifest file.");
         master_manifest = j;
     }
+    println!("Done.");
     
     // find all ignored files and directories, so they can be skipped when hashing to save time
     let mut ignores: BTreeSet<String> = BTreeSet::new();
@@ -88,6 +91,7 @@ fn main () {
         ignores.append(&mut utils::ignored_files(&cp_path, ignore_files));
     }
     let max_recursion: Option<usize> = Some(10);
+    println!("Taking a snapshot of how files look now...");
     // Hash files in `TARGET_DIR` to determine what needs to be updated
     let hashes: BTreeMap<String, String> = create_hashes(&cp_path,
         ignores,
@@ -98,6 +102,9 @@ fn main () {
         stdout(),
         &mut stderr()
     );
+    println!("");
+    println!("Done.");
+    println!("Determining what files need to be updated...");
     // now compare them against the downloaded manifest
     let res = compare_hashes("", master_manifest, hashes);
     let mut new_files: Vec<String>;
@@ -129,5 +136,5 @@ fn main () {
         } // end ok
         Err(_) => panic!("Error comparing hashes: hash lengths of the downloaded manifest and locally-generated one differ."),
     }
-    println!("Comparison results: {} new files, {} modified files, {} removed files.", new_files.len(), modified_files.len(), removed_files.len());
+    println!("Done. {} new files, {} modified files, {} removed files.", new_files.len(), modified_files.len(), removed_files.len());
 }
