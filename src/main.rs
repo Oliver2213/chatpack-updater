@@ -99,7 +99,7 @@ fn main () {
         &mut stderr()
     );
     // now compare them against the downloaded manifest
-    let res = compare_hashes("", hashes, master_manifest);
+    let res = compare_hashes("", master_manifest, hashes);
     let mut new_files: Vec<String>;
     let mut modified_files: Vec<String>;
     let mut ignored_files: Vec<String>;
