@@ -43,7 +43,6 @@ fn main () {
             let mut e_path: PathBuf = dir.clone();
             e_path.push(&e);
             if entries.contains(&e_path) {
-                println!("Marker found: {}", e_path.display());
                 marker_found = true
             }
         }
