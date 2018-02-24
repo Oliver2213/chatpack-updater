@@ -7,6 +7,7 @@ use std::error::Error;
 use checksums::util::relative_name;
 use gitignore::File;
 use walkdir::WalkDir;
+use url::percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET};
 
 
 /// Given a path and a list of `gitignore::File` instances, return a BTreeSet of ignored files (as strings relative to the path given), ready for passing to checksums::ops::create_hashes
@@ -32,4 +33,18 @@ pub fn ignored_files (path: &Path, ignore_files: Vec<File>) -> BTreeSet<String> 
         }
     }    
     ignores
+}
+
+/// Given a string, split it up on the / character, url percent encode each substring, then reassenble them
+pub fn percent_encode_pathstring (pathstring: &str) -> String {
+    // This takes paths as strings rather than path objects
+    let substrings: Vec<&str> = pathstring.split('/').collect();
+    let mut encoded_subs: Vec<String>= Vec::new(); // vec to hold encoded substrings
+    for sub in substrings {
+        let i = utf8_percent_encode(sub, DEFAULT_ENCODE_SET);
+        let encoded_sub: String = i.collect();
+        encoded_subs.push(encoded_sub);
+    }
+    let result= encoded_subs.join("/");
+    result
 }
