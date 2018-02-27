@@ -88,7 +88,9 @@ fn main () {
     }
     if ignore_files.is_empty() == false {
         // walk our current directory recursively and add relative paths of ignored files and dirs
+        println!("Building list of ignored files...");
         ignores.append(&mut utils::ignored_files(&cp_path, ignore_files));
+        println!("Done.");
     }
     let max_recursion: Option<usize> = Some(10);
     println!("Taking a snapshot of how files look now...");
