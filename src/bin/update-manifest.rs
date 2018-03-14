@@ -121,8 +121,14 @@ fn main () {
                     Err(why) => panic!("Can't read version file {}: {}", cp_version_path.display(), why.description()),
                 }
                 str_ver = str_ver.trim().into();
-                version = Version::from_string(&str_ver);
-                version.update();
+                if str_ver.is_empty() {
+                    // file is empty for some reason; use the current date-based version
+                    println!("Warning: the version file is empty; using a new version string because an old one doesn't exist to update.");
+                    version = Version::new();
+                } else {
+                    version = Version::from_string(&str_ver);
+                    version.update();
+                }
                 // delete the current contents of the file so it can be written to later with just the newly-created version as a string
                 file.seek(SeekFrom::Start(0)).expect("Can't seek to offset 0 in the version file to overwrite it.");
                 match file.set_len(0){
