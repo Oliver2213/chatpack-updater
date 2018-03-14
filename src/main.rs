@@ -92,6 +92,7 @@ fn main () {
         ignores.append(&mut utils::ignored_files(&cp_path, ignore_files));
         println!("Done.");
     }
+    println!("Ignores: {:?}", ignores);
     let max_recursion: Option<usize> = Some(10);
     println!("Taking a snapshot of how files look now...");
     // Hash files in `TARGET_DIR` to determine what needs to be updated

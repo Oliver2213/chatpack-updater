@@ -35,10 +35,12 @@ So instead we call included_files, and check if each path I'm iterating over is 
             Ok(entry) => {
 //                println!("Working on '{:?}'", entry.file_name());
                 // check to see if the path is excluded for each ignore file we were given
-                if !included_files.contains(&entry.path().to_path_buf()) && entry.path() != path{
+                if included_files.contains(&entry.path().to_path_buf()) == false && entry.path() != path{
+                    println!("Ignoring: {:?}", entry.path());
                     ignores.insert(relative_name(path, entry.path()));
                     // if this entry is  a directory, we can skip recursing through it, as gitignore says there's no included files here
                     if entry.file_type().is_dir() {
+                        println!("Skipping directory {:?}", entry.path());
                         walker.skip_current_dir();
                     }
                 }
@@ -46,7 +48,7 @@ So instead we call included_files, and check if each path I'm iterating over is 
                     for f in &ignore_files {
                         let ignored_entry = f.is_excluded(entry.path()).unwrap();
                         if ignored_entry && entry.path() != path {
-                            ignores.insert(relative_name(path, entry.path()));
+                            ignores.append(relative_name(path, entry.path()));
                         }
                     }
 */
