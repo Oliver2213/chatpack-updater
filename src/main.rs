@@ -140,4 +140,39 @@ fn main () {
         Err(_) => panic!("Error comparing hashes: hash lengths of the downloaded manifest and locally-generated one differ."),
     }
     println!("Done. {} new files, {} modified files, {} removed files.", new_files.len(), modified_files.len(), removed_files.len());
+    
+    // Now download the files that are new or have been modified
+    let mut ftd = vec![]; // files to download
+    ftd.extend(new_files);
+    ftd.extend(modified_files);
+    // now that all the pathstrings are in one vec, loop over them, percent encode them, download them, then write each to disk
+    for pathstring in ftd {
+        let e = utils::percent_encode_pathstring(&pathstring);
+        println!("Downloading {:?}", e);
+        let mut url: &str = &format!("{}{}", BASE_FILE_URL, e);
+        let mut resp = match r_client.get(url).send() {
+            Ok(response) => response,
+            Err(why) => panic!("Can't retrieve file '{}': {}", pathstring, why.description()),
+        };
+        // We have a valid response; check it's status code
+        if resp.status().is_success() == false {
+            println!("Error retrieving file '{}': Git Hub returned status code {}. Please try updating again later.", pathstring, resp.status());
+            return;
+        }
+        // the program has exited if the status wasn't a success; now write the file out to disk.
+        {
+            let mut p: PathBuf = cp_path.clone();
+            p.push(&pathstring);
+            let f = OpenOptions::new().create(true).write(true).truncate(true).open(p);
+            match f {
+                Ok(mut file) => {
+                    println!("Writing to disk...");
+                    // copy the http response (which is the file) to the opened file
+                    resp.copy_to(&mut file).unwrap();
+                    println!("Done!");
+                },
+                Err(why) => panic!("Unable to open file '{}': {{", why.description()),
+            }
+        } // end the file write scope
+    }// end the pathstring for loop
 }
