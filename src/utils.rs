@@ -36,7 +36,6 @@ So instead we call included_files, and check if each path I'm iterating over is 
 //                println!("Working on '{:?}'", entry.file_name());
                 // check to see if the path is excluded for each ignore file we were given
                 if included_files.contains(&entry.path().to_path_buf()) == false && entry.path() != path{
-                    println!("Ignoring: {:?}", entry.path());
                     ignores.insert(relative_name(path, entry.path()));
                     // if this entry is  a directory, we can skip recursing through it, as gitignore says there's no included files here
                     if entry.file_type().is_dir() {

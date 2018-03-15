@@ -3,7 +3,7 @@
 // This program Hashes files under `TARGET_DIR`, then compares that to a downloaded manifest it retrieves from the repository, then replaces files who's hashes differ
 
 use std::io::{stdout, stderr, Read};
-use std::fs::{File, OpenOptions, read_dir};
+use std::fs::{File, OpenOptions, read_dir, create_dir_all, rename, remove_file};
 use std::path::{Path, PathBuf};
 use std::env;
 use std::collections::{BTreeSet, BTreeMap};
@@ -52,6 +52,9 @@ fn main () {
             return;
         }
     }
+    // identify the path to this program
+    let this_prog_path = env::current_exe().expect("Unable to get the path to the updater.");
+    let this_prog_name = this_prog_path.file_name().unwrap();
     // get a reqwest client instance (for http requests)
     let r_client = reqwest::Client::new();
     println!("Retrieving a snapshot of what files in the latest version look like...");
@@ -163,7 +166,14 @@ fn main () {
         {
             let mut p: PathBuf = cp_path.clone();
             p.push(&pathstring);
-            let f = OpenOptions::new().create(true).write(true).truncate(true).open(p);
+            // since open won't create intervening directories, run create_dir_all on path.parent to create any directories up the file that don't exist
+            create_dir_all(&p.parent().unwrap()).unwrap();
+            // check if the file to be updated is actually this program
+            if this_prog_name == p.file_name().unwrap() {
+                // rename this program, passing a '.old' suffix so the new version can be downloaded.
+                rename(&this_prog_path, &this_prog_path.with_extension("old")).expect("Error renaming the updater.");
+            }
+            let f = OpenOptions::new().create(true).write(true).truncate(true).open(&p);
             match f {
                 Ok(mut file) => {
                     println!("Writing to disk...");
@@ -171,8 +181,12 @@ fn main () {
                     resp.copy_to(&mut file).unwrap();
                     println!("Done!");
                 },
-                Err(why) => panic!("Unable to open file '{}': {{", why.description()),
+                Err(why) => {
+                    println!("Unable to open file '{}': {}", p.display(), why.description());
+                    return;
+                },
             }
         } // end the file write scope
     }// end the pathstring for loop
+    println!("Update completed!");
 }
