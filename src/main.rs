@@ -153,6 +153,7 @@ fn main () {
         let e = utils::percent_encode_pathstring(&pathstring);
         println!("Downloading {:?}", e);
         let mut url: &str = &format!("{}{}", BASE_FILE_URL, e);
+        //println!("URL: {:?}", url);
         let mut resp = match r_client.get(url).send() {
             Ok(response) => response,
             Err(why) => panic!("Can't retrieve file '{}': {}", pathstring, why.description()),

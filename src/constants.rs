@@ -10,4 +10,4 @@ pub const MANIFEST_FILENAME: &str = "chatpack.update-manifest"; // The filename 
 pub const MASTER_MANIFEST_URL: &str = "https://git.chatmud.com/athlon/chatpack/raw/master/chatpack.update-manifest";
 pub const STANDARD_UPDATER_IGNORE_FILENAME: &str = "chatpack-standard.update-ignore"; // the name of the file with git ignore syntax specifying files and directories all components of the updater will ignore by default
 pub const CUSTOM_UPDATER_IGNORE_FILENAME: &str = "chatpack-custom.update-ignore"; // the name of the file with git ignore syntax specifying files and directories all components of the updater will ignore; this is meant for use by the user, and gets applied after the standard patterns
-pub const BASE_FILE_URL: &str = "https://git.chatmud.com/athlon/chatpack/raw/master/"; // base url which individual filenames will get added to
+pub const BASE_FILE_URL: &str = "https://git.chatmud.com/athlon/chatpack/blob/master/chatpack/"; // base url which individual filenames will get added to
