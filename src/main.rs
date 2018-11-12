@@ -151,7 +151,7 @@ fn main () {
     // now that all the pathstrings are in one vec, loop over them, percent encode them, download them, then write each to disk
     for pathstring in ftd {
         let e = utils::percent_encode_pathstring(&pathstring);
-        println!("Downloading {:?}", e);
+        //println!("Downloading {:?}", e);
         let mut url: &str = &format!("{}{}", BASE_FILE_URL, e);
         //println!("URL: {:?}", url);
         let mut resp = match r_client.get(url).send() {
@@ -177,10 +177,10 @@ fn main () {
             let f = OpenOptions::new().create(true).write(true).truncate(true).open(&p);
             match f {
                 Ok(mut file) => {
-                    println!("Writing to disk...");
+                    //println!("Writing to disk...");
                     // copy the http response (which is the file) to the opened file
                     resp.copy_to(&mut file).unwrap();
-                    println!("Done!");
+                    //println!("Done!");
                 },
                 Err(why) => {
                     println!("Unable to open file '{}': {}", p.display(), why.description());
