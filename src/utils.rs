@@ -39,7 +39,7 @@ So instead we call included_files, and check if each path I'm iterating over is 
                     ignores.insert(relative_name(path, entry.path()));
                     // if this entry is  a directory, we can skip recursing through it, as gitignore says there's no included files here
                     if entry.file_type().is_dir() {
-                        println!("Skipping directory {:?}", entry.path());
+                        //println!("Skipping directory {:?}", entry.path());
                         walker.skip_current_dir();
                     }
                 }

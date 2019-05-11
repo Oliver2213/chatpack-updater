@@ -68,7 +68,8 @@ fn main () {
             Err(why) => panic!("Can't retrieve the manifest file needed to update: {}", why.description()),
         };
         if resp.status().is_success() == false {
-            panic!("Can't retrieve the manifest file needed to update: git hub returned status code {}.", resp.status())
+            println!("Can't retrieve the manifest file needed to update: ChatMUD's git returned status code {}.", resp.status());
+            return;
         }
         // now that we have a response, get the body and parse
         let j: BTreeMap<String, String> = resp.json().expect("Error parsing downloaded manifest file.");
@@ -91,11 +92,9 @@ fn main () {
     }
     if ignore_files.is_empty() == false {
         // walk our current directory recursively and add relative paths of ignored files and dirs
-        println!("Building list of ignored files...");
         ignores.append(&mut utils::ignored_files(&cp_path, ignore_files));
-        println!("Done.");
     }
-    println!("Ignores: {:?}", ignores);
+    //println!("Ignores: {:?}", ignores);
     let max_recursion: Option<usize> = Some(10);
     println!("Taking a snapshot of how files look now...");
     // Hash files in `TARGET_DIR` to determine what needs to be updated
@@ -110,7 +109,7 @@ fn main () {
     );
     println!("");
     println!("Done.");
-    println!("Determining what files need to be updated...");
+    println!("Determining what files need updating...");
     // now compare them against the downloaded manifest
     let res = compare_hashes("", master_manifest, hashes);
     let mut new_files: Vec<String>;
@@ -142,7 +141,7 @@ fn main () {
         } // end ok
         Err(_) => panic!("Error comparing hashes: hash lengths of the downloaded manifest and locally-generated one differ."),
     }
-    println!("Done. {} new files, {} modified files, {} removed files.", new_files.len(), modified_files.len(), removed_files.len());
+    println!("Done. {} new files, {} modified files.", new_files.len(), modified_files.len());
     
     // Now download the files that are new or have been modified
     let mut ftd = vec![]; // files to download
@@ -160,7 +159,7 @@ fn main () {
         };
         // We have a valid response; check it's status code
         if resp.status().is_success() == false {
-            println!("Error retrieving file '{}': Git Hub returned status code {}. Please try updating again later.", pathstring, resp.status());
+            println!("Error retrieving file '{}': ChatMUD's git returned status code {}. Please try updating again later.", pathstring, resp.status());
             return;
         }
         // the program has exited if the status wasn't a success; now write the file out to disk.
