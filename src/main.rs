@@ -2,9 +2,9 @@
 
 // This program Hashes files under `TARGET_DIR`, then compares that to a downloaded manifest it retrieves from the repository, then replaces files who's hashes differ
 
-use std::io::{stdout, stderr, Read};
-use std::fs::{File, OpenOptions, read_dir, create_dir_all, rename, remove_file};
-use std::path::{Path, PathBuf};
+use std::io::{stdout, stderr};
+use std::fs::{OpenOptions, read_dir, create_dir_all, rename};
+use std::path::PathBuf;
 use std::env;
 use std::collections::{BTreeSet, BTreeMap};
 use std::error::Error;
@@ -47,7 +47,7 @@ fn main () {
                 marker_found = true
             }
         }
-        if marker_found == false {
+        if !marker_found {
             println!("You must run the {} updater from your mush folder.", TARGET_DIR);
             return;
         }
@@ -67,7 +67,7 @@ fn main () {
             Ok(r) => r,
             Err(why) => panic!("Can't retrieve the manifest file needed to update: {}", why.description()),
         };
-        if resp.status().is_success() == false {
+        if !resp.status().is_success() {
             println!("Can't retrieve the manifest file needed to update: ChatMUD's git returned status code {}.", resp.status());
             return;
         }
@@ -90,7 +90,7 @@ fn main () {
     if custom_ignores_path.exists() {
         ignore_files.push(gitignore::File::new(&custom_ignores_path).unwrap())
     }
-    if ignore_files.is_empty() == false {
+    if !ignore_files.is_empty(){
         // walk our current directory recursively and add relative paths of ignored files and dirs
         ignores.append(&mut utils::ignored_files(&cp_path, ignore_files));
     }
@@ -107,7 +107,7 @@ fn main () {
         stdout(),
         &mut stderr()
     );
-    println!("");
+    println!();
     println!("Done.");
     println!("Determining what files need updating...");
     // now compare them against the downloaded manifest
@@ -158,7 +158,7 @@ fn main () {
             Err(why) => panic!("Can't retrieve file '{}': {}", pathstring, why.description()),
         };
         // We have a valid response; check it's status code
-        if resp.status().is_success() == false {
+        if !resp.status().is_success(){
             println!("Error retrieving file '{}': ChatMUD's git returned status code {}. Please try updating again later.", pathstring, resp.status());
             return;
         }
