@@ -11,6 +11,7 @@ use std::error::Error;
 // pull in checksums
 extern crate checksums;
 use checksums::ops::{create_hashes, compare_hashes, CompareResult, CompareFileResult};
+use indicatif::{ProgressBar, ProgressStyle};
 
 extern crate chatpack_updater; // pull in our library crate so every binary can use things it reexports
 use chatpack_updater::utils;
@@ -37,7 +38,6 @@ fn main () {
             } // end the match
           }) // end the closure
           .collect();
-        //println!("Entries in directory: {:?}", entries);
         let mut marker_found= false;
         let dir: PathBuf = env::current_dir().unwrap();
         for e in &mush_directory_markers {
@@ -68,7 +68,7 @@ fn main () {
             Err(why) => panic!("Can't retrieve the manifest file needed to update: {}", why.description()),
         };
         if !resp.status().is_success() {
-            println!("Can't retrieve the manifest file needed to update: ChatMUD's git returned status code {}.", resp.status());
+            println!("Can't retrieve the manifest file needed to update: ChatMUD's git returned status code {}. Please try again later.", resp.status());
             return;
         }
         // now that we have a response, get the body and parse
@@ -94,7 +94,6 @@ fn main () {
         // walk our current directory recursively and add relative paths of ignored files and dirs
         ignores.append(&mut utils::ignored_files(&cp_path, ignore_files));
     }
-    //println!("Ignores: {:?}", ignores);
     let max_recursion: Option<usize> = Some(10);
     println!("Taking a snapshot of how files look now...");
     // Hash files in `TARGET_DIR` to determine what needs to be updated
@@ -147,8 +146,18 @@ fn main () {
     let mut ftd = vec![]; // files to download
     ftd.extend(new_files);
     ftd.extend(modified_files);
+    let total = ftd.len();
     // now that all the pathstrings are in one vec, loop over them, percent encode them, download them, then write each to disk
+    // Oh, and progress bar too.
+    let download_progbar = indicatif::ProgressBar::new(total as u64);
+    download_progbar.set_style(
+      ProgressStyle::default_bar()
+      .template("{pos}/{len} - {msg} Remaining: {eta} {bar:>}")
+      .progress_chars("#>-")
+    );
     for pathstring in ftd {
+        download_progbar.set_message(&pathstring);
+        download_progbar.inc(1);
         let e = utils::percent_encode_pathstring(&pathstring);
         //println!("Downloading {:?}", e);
         let mut url: &str = &format!("{}{}", BASE_FILE_URL, e);
@@ -188,5 +197,6 @@ fn main () {
             }
         } // end the file write scope
     }// end the pathstring for loop
+    download_progbar.finish_with_message(&format!("downloaded"));
     println!("Update completed!");
 }
