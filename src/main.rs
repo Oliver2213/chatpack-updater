@@ -68,7 +68,7 @@ fn main () {
             Err(why) => panic!("Can't retrieve the manifest file needed to update: {}", why.description()),
         };
         if !resp.status().is_success() {
-            println!("Can't retrieve the manifest file needed to update: ChatMUD's git returned status code {}. Please try again later.", resp.status());
+            println!("Can't retrieve the manifest file needed to update: returned status code {}. Please try again later.", resp.status());
             return;
         }
         // now that we have a response, get the body and parse
@@ -168,7 +168,7 @@ fn main () {
         };
         // We have a valid response; check it's status code
         if !resp.status().is_success(){
-            println!("Error retrieving file '{}': ChatMUD's git returned status code {}. Please try updating again later.", pathstring, resp.status());
+            println!("Error retrieving file '{}': returned status code {}. Please try updating again later.", pathstring, resp.status());
             return;
         }
         // the program has exited if the status wasn't a success; now write the file out to disk.
